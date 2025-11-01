@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrador - Bingo de Boda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+        
+        * { font-family: 'Poppins', sans-serif; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(168, 85, 247, 0.8); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .float-animation { animation: float 3s ease-in-out infinite; }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out forwards; }
+        .sparkle { animation: sparkle 1.5s ease-in-out infinite; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 200% 200%;
+            animation: gradient-shift 8s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .trophy-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Decoraciones flotantes -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-10 left-10 text-6xl opacity-20 float-animation">💕</div>
+        <div class="absolute top-1/4 right-20 text-5xl opacity-20 float-animation" style="animation-delay: 0.5s;">✨</div>
+        <div class="absolute bottom-20 left-1/4 text-4xl opacity-20 float-animation" style="animation-delay: 1s;">🎉</div>
+        <div class="absolute bottom-1/3 right-10 text-5xl opacity-20 float-animation" style="animation-delay: 1.5s;">💍</div>
+    </div>
+
+    <div class="min-h-screen p-4 relative z-10">
+        <div class="max-w-5xl mx-auto">
+            <!-- Header principal -->
+            <div class="glass-effect rounded-3xl shadow-2xl p-8 mb-6 slide-in">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-4xl sparkle">👑</span>
+                            <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                Panel de Control
+                            </h1>
+                        </div>
+                        <p class="text-xl text-purple-600 font-semibold">Bingo de Boda - Arnick & Paola</p>
+                        <p class="text-sm text-gray-500 mt-1">Administra el juego en tiempo real</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-2xl mb-3 pulse-glow">
+                            <div class="flex items-center gap-2 justify-end">
+                                <span class="text-2xl">👥</span>
+                                <span id="playerCount" class="text-2xl font-bold">0</span>
+                            </div>
+                            <p class="text-xs opacity-90">Jugadores activos</p>
+                        </div>
+                        <button onclick="resetGame()" class="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl hover:shadow-lg transition-all font-semibold">
+                            🔄 Reiniciar Juego
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sección de ganadores -->
+                <div id="winnersSection" class="hidden mt-6">
+                    <div class="bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-400 rounded-3xl p-6 border-4 border-yellow-500 shadow-2xl slide-in">
+                        <div class="flex items-center justify-center gap-3 mb-4">
+                            <span class="text-5xl trophy-shake">🏆</span>
+                            <h2 class="text-3xl font-bold text-white drop-shadow-lg">¡GANADORES!</h2>
+                            <span class="text-5xl trophy-shake">🏆</span>
+                        </div>
+                        <div id="winnersList" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl p-4 text-center">
+                        <div class="text-3xl font-bold text-purple-700" id="activeCount">0</div>
+                        <div class="text-sm text-purple-600 font-medium">Preguntas Activas</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl p-4 text-center">
+                        <div class="text-3xl font-bold text-pink-700">12</div>
+                        <div class="text-sm text-pink-600 font-medium">Total Preguntas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instrucciones -->
+            <div class="glass-effect rounded-2xl p-6 mb-6 slide-in" style="animation-delay: 0.1s;">
+                <div class="flex items-start gap-3">
+                    <span class="text-3xl">💡</span>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-2">Instrucciones</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Haz clic en cada pregunta cuando la anuncies al micrófono. Las casillas se activarán automáticamente para todos los jugadores. 
+                            Cuando alguien complete las 12 casillas, aparecerá automáticamente en la lista de ganadores.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de preguntas -->
+            <div id="questionsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+            <!-- Footer -->
+            <div class="glass-effect rounded-2xl p-6 text-center mt-6 slide-in" style="animation-delay: 0.2s;">
+                <p class="text-gray-700 font-medium mb-2">
+                    📱 Los invitados juegan desde: <span class="font-bold text-purple-600">jugador.html</span>
+                </p>
+                <p class="text-sm text-gray-500">
+                    Comparte el archivo o link con los invitados para que participen
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            "Alguien que haya venido desde muy lejos",
+            "Alguien que cumple años este mes",
+            "Alguien que vino sin acompañante",
+            "Alguien que tenga hijos",
+            "Alguien que se va a casar pronto",
+            "Alguien que ya celebró 25 años de matrimonio",
+            "Alguien que conoció a Arnick primero",
+            "Alguien que conoció a Paola primero",
+            "Alguien que estuvo presente cuando se hicieron pareja",
+            "Alguien que lloró durante la ceremonia 💀",
+            "Alguien que tenga corbata del mismo color que la decoración",
+            "Alguien que combine colores con su pareja"
+        ];
+
+        let activeQuestions = new Set();
+        let winners = [];
+
+        function loadState() {
+            const saved = localStorage.getItem('adminState');
+            if (saved) {
+                const state = JSON.parse(saved);
+                activeQuestions = new Set(state.activeQuestions || []);
+            }
+            
+            const savedWinners = localStorage.getItem('winners');
+            if (savedWinners) {
+                winners = JSON.parse(savedWinners);
+                updateWinners();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('adminState', JSON.stringify({
+                activeQuestions: Array.from(activeQuestions),
+                timestamp: Date.now()
+            }));
+        }
+
+        function createGrid() {
+            const grid = document.getElementById('questionsGrid');
+            grid.innerHTML = '';
+            
+            questions.forEach((question, index) => {
+                const isActive = activeQuestions.has(index);
+                const button = document.createElement('button');
+                button.className = `p-5 rounded-2xl transition-all duration-300 text-left transform hover:scale-105 slide-in ${
+                    isActive
+                        ? 'bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 text-white shadow-2xl scale-105'
+                        : 'glass-effect text-gray-700 hover:shadow-xl'
+                }`;
+                button.style.animationDelay = `${index * 0.05}s`;
+                button.onclick = () => toggleQuestion(index);
+                
+                button.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
+                            isActive 
+                                ? 'bg-white/30 backdrop-blur text-white' 
+                                : 'bg-gradient-to-br from-purple-400 to-pink-400 text-white'
+                        }">
+                            ${isActive ? '✓' : index + 1}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold ${isActive ? 'text-white' : 'text-gray-800'} leading-snug">
+                                ${question}
+                            </p>
+                            ${isActive 
+                                ? '<div class="flex items-center gap-1 mt-2"><div class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div><span class="text-xs text-white/90 font-medium">Activa ahora</span></div>' 
+                                : '<p class="text-xs text-gray-500 mt-1">Toca para activar</p>'
+                            }
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(button);
+            });
+            
+            document.getElementById('activeCount').textContent = activeQuestions.size;
+        }
+
+        function toggleQuestion(index) {
+            if (activeQuestions.has(index)) {
+                activeQuestions.delete(index);
+            } else {
+                activeQuestions.add(index);
+            }
+            saveState();
+            createGrid();
+        }
+
+        function checkWinners() {
+            const keys = Object.keys(localStorage);
+            const playerKeys = keys.filter(k => k.startsWith('player_'));
+            
+            document.getElementById('playerCount').textContent = playerKeys.length;
+            
+            playerKeys.forEach(key => {
+                const data = JSON.parse(localStorage.getItem(key));
+                if (data.hasWon && !winners.find(w => w.name === data.playerName)) {
+                    winners.push({
+                        name: data.playerName,
+                        time: data.winTime
+                    });
+                    localStorage.setItem('winners', JSON.stringify(winners));
+                }
+            });
+            
+            updateWinners();
+        }
+
+        function updateWinners() {
+            const section = document.getElementById('winnersSection');
+            const list = document.getElementById('winnersList');
+            
+            if (winners.length > 0) {
+                section.classList.remove('hidden');
+                list.innerHTML = winners.map((winner, idx) => `
+                    <div class="bg-white rounded-2xl p-4 flex items-center justify-between shadow-lg slide-in" style="animation-delay: ${idx * 0.1}s;">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🎖️'}</span>
+                            <div>
+                                <span class="font-bold text-gray-800 text-lg">${winner.name}</span>
+                                <p class="text-xs text-gray-500">Ganador #${idx + 1}</p>
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-600 font-medium">${new Date(winner.time).toLocaleTimeString()}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function resetGame() {
+            if (!confirm('¿Seguro que quieres reiniciar el juego? Esto borrará todo el progreso de todos los jugadores.')) return;
+            
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('player_') || key === 'adminState' || key === 'winners') {
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            activeQuestions.clear();
+            winners = [];
+            createGrid();
+            updateWinners();
+            document.getElementById('winnersSection').classList.add('hidden');
+            alert('✅ ¡Juego reiniciado exitosamente!');
+        }
+
+        loadState();
+        createGrid();
+        setInterval(checkWinners, 2000);
+    </script>
+</body>
+</html>
