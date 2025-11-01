@@ -5,46 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo de Boda - Arnick & Paola</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
-        
         * { font-family: 'Poppins', sans-serif; }
         
-        @keyframes gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(5deg); }
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes confetti-fall {
-            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-        
-        @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-        
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes gradient-shift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(5deg); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes confetti-fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
@@ -64,21 +36,8 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
-        .shimmer {
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
-        }
-        
-        .glow {
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4),
-                        0 0 40px rgba(168, 85, 247, 0.2);
-        }
-        
-        .winner-glow {
-            box-shadow: 0 0 30px rgba(251, 191, 36, 0.6),
-                        0 0 60px rgba(251, 191, 36, 0.3);
-        }
+        .glow { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(168, 85, 247, 0.2); }
+        .winner-glow { box-shadow: 0 0 30px rgba(251, 191, 36, 0.6), 0 0 60px rgba(251, 191, 36, 0.3); }
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
@@ -151,7 +110,7 @@
                     </li>
                     <li class="flex items-start gap-2">
                         <span class="text-purple-500 font-bold">4.</span>
-                        <span class="font-bold text-purple-600">¡Completa las 12 y gana un premio!</span>
+                        <span class="font-bold text-purple-600">¡Completa las 12 y gana!</span>
                     </li>
                 </ul>
             </div>
@@ -172,7 +131,7 @@
                         </div>
                         <div>
                             <h1 id="playerNameDisplay" class="text-2xl font-bold text-gray-800"></h1>
-                            <p class="text-purple-600 font-medium">Jugador Activo</p>
+                            <p class="text-purple-600 font-medium">Jugador Activo ⚡</p>
                         </div>
                     </div>
                     <div class="text-right">
@@ -228,11 +187,35 @@
             "Alguien que combine colores con su pareja"
         ];
 
+        let database;
         let playerName = '';
         let playerId = '';
         let markedCells = new Set();
         let activeQuestions = new Set();
         let hasWon = false;
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyChk6NG_e9KSNL40iDq8fvrnuqsW55ZzrY",
+            authDomain: "bingo-boda-arnick-paola.firebaseapp.com",
+            databaseURL: "https://bingo-boda-arnick-paola-default-rtdb.firebaseio.com",
+            projectId: "bingo-boda-arnick-paola",
+            storageBucket: "bingo-boda-arnick-paola.firebasestorage.app",
+            messagingSenderId: "40905188995",
+            appId: "1:40905188995:web:ef75c57e678ca615195db6"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+
+        // Escuchar cambios en preguntas activas
+        database.ref('activeQuestions').on('value', (snapshot) => {
+            const data = snapshot.val();
+            activeQuestions = new Set(data ? Object.keys(data).map(Number) : []);
+            if (playerId) createGrid();
+            updateStatus();
+        });
 
         function registerPlayer() {
             const input = document.getElementById('playerNameInput');
@@ -254,31 +237,25 @@
             document.getElementById('gameScreen').classList.remove('hidden');
             document.getElementById('playerNameDisplay').textContent = playerName;
             
-            loadPlayerState();
-            createGrid();
-            startChecking();
-        }
-
-        function loadPlayerState() {
-            const saved = localStorage.getItem(playerId);
-            if (saved) {
-                const data = JSON.parse(saved);
-                markedCells = new Set(data.markedCells || []);
-                hasWon = data.hasWon || false;
-                
-                if (hasWon) {
-                    showWinner();
-                }
-            }
-        }
-
-        function savePlayerState() {
-            localStorage.setItem(playerId, JSON.stringify({
+            // Guardar jugador en Firebase
+            database.ref(`players/${playerId}`).set({
                 playerName,
-                markedCells: Array.from(markedCells),
-                hasWon,
-                winTime: hasWon ? Date.now() : undefined
-            }));
+                markedCells: [],
+                hasWon: false,
+                joinTime: Date.now()
+            });
+
+            // Escuchar cambios en el jugador
+            database.ref(`players/${playerId}`).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    markedCells = new Set(data.markedCells || []);
+                    hasWon = data.hasWon || false;
+                    createGrid();
+                }
+            });
+
+            createGrid();
         }
 
         function createGrid() {
@@ -338,25 +315,27 @@
         }
 
         function toggleCell(index) {
-            if (markedCells.has(index)) {
-                markedCells.delete(index);
+            const newMarked = new Set(markedCells);
+            if (newMarked.has(index)) {
+                newMarked.delete(index);
             } else {
-                markedCells.add(index);
+                newMarked.add(index);
             }
             
-            savePlayerState();
-            createGrid();
+            markedCells = newMarked;
+            const markedArray = Array.from(markedCells);
             
-            if (markedCells.size === 12 && !hasWon) {
-                declareWinner();
-            }
-        }
+            database.ref(`players/${playerId}`).update({
+                markedCells: markedArray,
+                hasWon: markedArray.length === 12,
+                winTime: markedArray.length === 12 ? Date.now() : null
+            });
 
-        function declareWinner() {
-            hasWon = true;
-            savePlayerState();
-            showWinner();
-            createConfetti();
+            if (markedArray.length === 12 && !hasWon) {
+                hasWon = true;
+                showWinner();
+                createConfetti();
+            }
         }
 
         function showWinner() {
@@ -375,7 +354,6 @@
                     confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
                     confetti.style.left = Math.random() * 100 + '%';
                     confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
                     container.appendChild(confetti);
                     
                     setTimeout(() => confetti.remove(), 4000);
@@ -384,33 +362,16 @@
         }
 
         function updateProgress() {
-            const count = document.getElementById('progressCount');
-            count.textContent = `${markedCells.size}/12`;
-            
-            if (markedCells.size > 0) {
-                count.parentElement.parentElement.classList.add('glow');
-            }
+            document.getElementById('progressCount').textContent = `${markedCells.size}/12`;
         }
 
-        function checkActiveQuestions() {
-            const adminState = localStorage.getItem('adminState');
-            if (adminState) {
-                const state = JSON.parse(adminState);
-                activeQuestions = new Set(state.activeQuestions || []);
-                createGrid();
-                
-                const status = document.getElementById('statusMessage');
-                if (activeQuestions.size === 0) {
-                    status.innerHTML = '⏳ Esperando que el presentador active las preguntas...';
-                } else {
-                    status.innerHTML = `<span class="text-purple-700">✨ ${activeQuestions.size} preguntas activas</span><br><span class="text-sm text-gray-600">¡Encuentra personas y marca las casillas!</span>`;
-                }
+        function updateStatus() {
+            const status = document.getElementById('statusMessage');
+            if (activeQuestions.size === 0) {
+                status.innerHTML = '⏳ Esperando que el presentador active las preguntas...';
+            } else {
+                status.innerHTML = `<span class="text-purple-700">✨ ${activeQuestions.size} preguntas activas</span><br><span class="text-sm text-gray-600">¡Encuentra personas y marca las casillas!</span>`;
             }
-        }
-
-        function startChecking() {
-            checkActiveQuestions();
-            setInterval(checkActiveQuestions, 2000);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
